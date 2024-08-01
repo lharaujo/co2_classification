@@ -652,8 +652,8 @@ if page == pages[3] :
 
       # Plot loss history
       plt.figure(figsize=(12, 6))
-      plt.plot(history_mlp.history['loss'])
-      plt.plot(history_mlp.history['val_loss'])
+      plt.plot(mlp_model.history['loss'])
+      plt.plot(mlp_model.history['val_loss'])
       plt.title('MLP Model loss')
       plt.ylabel('Loss')
       plt.xlabel('Epoch')
