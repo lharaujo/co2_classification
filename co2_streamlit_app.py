@@ -642,8 +642,8 @@ if page == pages[3] :
       st.header("### Model Training History")
       # Plot accuracy history
       plt.figure(figsize=(12, 6))
-      plt.plot(history_mlp.history['accuracy'])
-      plt.plot(history_mlp.history['val_accuracy'])
+      plt.plot(mlp_model.history['accuracy'])
+      plt.plot(mlp_model.history['val_accuracy'])
       plt.title('MLP Model accuracy')
       plt.ylabel('Accuracy')
       plt.xlabel('Epoch')
