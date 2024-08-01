@@ -281,7 +281,7 @@ if page == pages[1] :
    corr = df_analysis_quant.corr()
    
    # Create the heatmap using Seaborn and Matplotlib
-   fig, ax = plt.subplots(figsize(10,10))
+   fig, ax = plt.subplots(figsize=(10,10))
    sns.heatmap(corr, cmap="Blues", annot=True, center = True, ax=ax)
    plt.xticks(rotation=45)
    plt.title("Correlation heatmap between the target (Ewltp (g/km)) and the quantitative features")
