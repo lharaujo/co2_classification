@@ -281,8 +281,8 @@ if page == pages[1] :
    corr = df_analysis_quant.corr()
    
    # Create the heatmap using Seaborn and Matplotlib
-   fig, ax = plt.subplots()
-   sns.heatmap(corr, cmap="Blues", annot=True, ax=ax)
+   fig, ax = plt.subplots(figsize(10,10))
+   sns.heatmap(corr, cmap="Blues", annot=True, center = True, ax=ax)
    plt.xticks(rotation=45)
    plt.title("Correlation heatmap between the target (Ewltp (g/km)) and the quantitative features")
 
@@ -600,6 +600,10 @@ if page == pages[3] :
       # Load the saved model
       mlp_model = load_model("mlp_model.h5") 
 
+      # Display model summary
+      st.subheader("MLP Model Summary")
+      st.write(mlp_model.summary())
+      
       # Evaluate the model
       loss_mlp, accuracy_mlp = mlp_model.evaluate(X_test, y_test)
       st.write(f'MLP Accuracy on test set: {accuracy_mlp * 100:.2f}%')
