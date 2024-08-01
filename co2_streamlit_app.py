@@ -5,6 +5,9 @@ import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
 import joblib
+import json
+import requests
+import io
 
 from sklearn.preprocessing import StandardScaler, MinMaxScaler
 from sklearn.model_selection import train_test_split
@@ -22,9 +25,6 @@ from tensorflow.keras.layers import Dense, Dropout
 from tensorflow.keras.callbacks import EarlyStopping
 
 from tensorflow.keras.models import load_model
-
-import requests
-import io
 
 # function to import data files from github
 def get_csv(file_name):
@@ -59,15 +59,17 @@ page=st.sidebar.radio("Go to", pages)
 # --- Page 1  (Martha) --- 
 
 if page == pages[0] : 
+   st.write("##### August 2, 2024")
    st.header("Introduction", divider="orange")
+
    st.markdown(
    """
    - Aim of Project: build a model that predicts expected carbon emissions of a car
-   - Caveat: Only emissions while driving the car are taken into account (_**not**_ the emissions on the whole lifecycle of a car)
+   - Caveat: Only emissions while driving the car are taken into account (_**not**_ the emissions deriving from the whole lifecycle of a car)
    - Input Data: set of technical features of a car
-   - Dataset: final dataset on CO2 emissions of new passenger cars in the EU in 2022 provided by the European Environmental Agency (EEA)
+   - Dataset: from European Environmental Agency, the 2022 final dataset on CO2 emissions of new passenger cars
    """
-   )  
+   )
 
 # --- Page 2 (Lena) ---
 
@@ -335,222 +337,271 @@ if page == pages[1] :
 # --- Page 3 (Martha) ---
 
 if page == pages[2] : 
-   st.header("XG Boost Classification Model", divider="orange")
+   if page == pages[2] : 
+      st.header("XG Boost Classification Model", divider="orange")
 
-   st.subheader("_1. Summary_")
-   st.markdown(
-   """
-   - Predicts whether expected carbon emissions are very low, low, average, high or very high
-   - Needs only 6 technical features as input data
-   - Can be trained in less than 1.5 minutes (CPU time)
-   - Performs exceptionally well in terms of accuracy, precision, recall and F1-score (96%)
-   """
-   )
+      # --- XG Boost Classification Model ---
 
-   st.divider()
-   
-   # --- XG Boost Classification Model ---
+      # new compound variable for axle widths
+      df_all['at_sum'] = df_all['at1'] + df_all['at2']
+      df_all = df_all.drop(columns = ['at1', 'at2'])
 
-   # new compound variable for axle widths
-   df_all['at_sum'] = df_all['at1'] + df_all['at2']
-   df_all = df_all.drop(columns = ['at1', 'at2'])
+      # target variable
+      target = df_all['emissions_cat']
 
-   # target variable
-   target = df_all['emissions_cat']
+      # features selected by the Extra Tree classifier
+      features_etc = ['m', 'w', 'ep', 'fuel_consumption', 'at_sum']
+      data_etc = df_all[features_etc]
 
-   # features selected by the Extra Tree classifier
-   features_etc = ['m', 'w', 'ep', 'fuel_consumption', 'at_sum']
-   data_etc = df_all[features_etc]
+      # train and test sets
+      X_train_etc, X_test_etc, y_train_etc, y_test_etc  = train_test_split(data_etc, target, test_size = 0.2, random_state = 42)
 
-   # train and test sets
-   X_train_etc, X_test_etc, y_train_etc, y_test_etc  = train_test_split(data_etc, target, test_size = 0.2, random_state = 42)
+      # scale
+      scaler = StandardScaler()
+      X_train_scaled_etc = scaler.fit_transform(X_train_etc)
+      X_test_scaled_etc = scaler.transform(X_test_etc)
 
-   # scale
-   scaler = StandardScaler()
-   X_train_scaled_etc = scaler.fit_transform(X_train_etc)
-   X_test_scaled_etc = scaler.transform(X_test_etc)
-   st.write("### Introduction")
+      st.subheader("_1. Summary_")
+      st.markdown(
+      """
+      - Predicts whether expected carbon emissions are very low, low, average, high or very high
+      - Needs only 6 technical features as input data
+      - Can be trained in less than 1.5 minutes (CPU time)
+      - Performs exceptionally well in terms of accuracy, precision, recall and F1-score (96%)
+      """
+      )
 
-   st.subheader("_2. Target Variable: 5 Classes for CO2 Emissions_")
+      st.divider()
 
-   # plot CO2 emissions
-   fig = plt.figure()
-   sns.kdeplot(df['ewltp'], fill = False, cut = 0)
-   plt.axvline(x= 124.0, ymin = 0, ymax = 0.71, c = 'darkorange', ls = '--', lw = 1)
-   plt.axvline(x= 134.0, ymin = 0, ymax = 0.95, c = 'darkorange', ls = '--', lw = 1)
-   plt.axvline(x= 146.0, ymin = 0, ymax = 0.832, c = 'darkorange', ls = '--', lw = 1)
-   plt.axvline(x= 159.0, ymin = 0, ymax = 0.54, c = 'darkorange', ls = '--', lw = 1)
-   plt.title('Distribution of CO2 Emissions')
-   plt.xlabel('CO2 Emissions')
-   st.pyplot(fig)
 
-   st.caption("The orange dashed lines denote the 20% percentiles (124, 134, 146, 159).")
-   
-   # --- Table with Categories ---
-   a = [['very low', 0, '12 - 124'],
-        ['low', 1, '124 - 134'],
-        ['average', 2, '134 - 146'],
-        ['high', 3, '146 - 159'],
-        ['very high', 4, '159 - 233']]
+      st.subheader("_2. Target Variable: 5 Classes for CO2 Emissions_")
 
-   # create dataframe
-   a_df = pd.DataFrame(a, columns = ['Description', 'Class', 'Value Range (in grams per kilometer)'])
+      # plot CO2 emissions
+      fig = plt.figure()
+      sns.kdeplot(df['ewltp'], fill = False, cut = 0)
+      plt.axvline(x= 124.0, ymin = 0, ymax = 0.71, c = 'darkorange', ls = '--', lw = 1)
+      plt.axvline(x= 134.0, ymin = 0, ymax = 0.95, c = 'darkorange', ls = '--', lw = 1)
+      plt.axvline(x= 146.0, ymin = 0, ymax = 0.832, c = 'darkorange', ls = '--', lw = 1)
+      plt.axvline(x= 159.0, ymin = 0, ymax = 0.54, c = 'darkorange', ls = '--', lw = 1)
+      plt.title('Distribution of CO2 Emissions')
+      plt.xlabel('CO2 Emissions')
+      st.pyplot(fig)
 
-   # display table
-   st.write("CO2 Emissions Classes", a_df)
-   # st.table(a_df)
+      st.caption("The orange dashed lines denote the 20% percentiles (124, 134, 146, 159).")
+      
+      # --- Table with Categories ---
+      a = [['very low', 0, '12 - 124'],
+         ['low', 1, '124 - 134'],
+         ['average', 2, '134 - 146'],
+         ['high', 3, '146 - 159'],
+         ['very high', 4, '159 - 233']]
 
-   # st.write(":orange[---]")  
+      # create dataframe
+      a_df = pd.DataFrame(a, columns = ['Description', 'Class', 'Value Range (in grams per kilometer)']).set_index('Description')
 
-   st.divider()
+      # display table
+      # st.write("CO2 Emissions Classes", a_df)
+      st.table(a_df)
 
-   # ---- Italian Data --- 
-   st.subheader("_3. The Italian Dataset (7.8% of the Data)_")
+      st.divider()
 
-   # plot
-   fig = plt.figure()
-   sns.countplot(x = "emissions_cat", data = df_cat_it)
-   plt.xlabel('CO2 Emissions Categories')
-   # plt.title("CO2 Emissions by Category (Italian Cars)")
-   st.pyplot(fig)
+      # ---- Italian Data --- 
+      st.subheader("_3. The Italian Dataset (7.8% of the Data)_")
 
-   st.divider()
+      # plot
+      fig = plt.figure()
+      sns.countplot(x = "emissions_cat", data = df_cat_it)
+      plt.xlabel('CO2 Emissions Categories')
+      st.pyplot(fig)
 
-   # ---- Feature Variables --- 
-   st.subheader("_4. Feature Variables_")
+      st.divider()
 
-   st.markdown(
-   """
-   1. One-hot encode categorical variables
-   2. Split the data into a training and test set (20%)
-   3. Standardize numerical data
-   4. Train base models (with the Italian dataset and the whole dataset)
-      - a. Grid search with KNN and Random Forest models 
-      - b. Boosting algorithms: Ada Boost and XG Boost
-   5. Select features
-      - a. Drop one of the two variables for vehicle mass
-      - b. Add the axle widths
-      - c. Use RFECV (with the Italian dataset) to find optimal number of feature variables 
-   """
-   )
+      # ---- Feature Variables --- 
+      st.subheader("_4. Feature Variables_")
 
-   # choose classifier 
-   model_choice = ['Extra Tree', 'Random Forest', 'Decision Tree', 'XG Boost' ]
-   option = st.selectbox('Choose the model for RFECV:', model_choice)
+      st.markdown(
+      """
+      1. One-hot encoded categorical variables
+      2. Split the data into a training and test set (20%)
+      3. Standardized numerical data
+      4. Used cross-validation to avoid under- and over-fitting (Stratified K-Fold, 5 folds)
+      5. Trained base models (with the Italian dataset and the whole dataset)
+         - a. Grid search with KNN and Random Forest models 
+         - b. Boosting algorithms: Ada Boost and XG Boost
+      6. Selected features
+         - a. Drop one of the two variables for vehicle mass
+         - b. Add the axle widths
+         - c. Use RFECV (with the Italian dataset and 4 base models) to find optimal number of feature variables 
+      """
+      )
 
-   def num_features(classifier):
-      if classifier == 'Extra Tree':
-         n = 6
-      if classifier == 'Random Forest':
-         n = 7
-      elif classifier == 'Decision Tree':
-         n = 8
-      elif classifier == 'XG Boost':
-         n = 9
-      return n
-   
-   def num_feature_variables(classifier):
-      if classifier == 'Extra Tree':
-         n = 5
-      if classifier == 'Random Forest':
-         n = 6
-      elif classifier == 'Decision Tree':
-         n = 7
-      elif classifier == 'XG Boost':
-         n = 14
-      return n
-   
-   def features(classifier):
-      if classifier == 'Extra Tree':
-         k = 'Fuel Consumption, Vehicle Mass, Engine Power, Wheelbase, Sum of the two Axle Widths'
-      if classifier == 'Random Forest':
-         k = 'Fuel Consumption, Vehicle Mass, Engine Power, Wheelbase, Sum of the two Axle Widths, Engine Capacity'
-      elif classifier == 'Decision Tree':
-         k = 'Fuel Consumption, Vehicle Mass, Engine Power, Wheelbase, Sum of the two Axle Widths, Engine Capacity, Fuel Type'
-      elif classifier == 'XG Boost':
-         k = 'Fuel Consumption, Vehicle Mass, Engine Power, Wheelbase, Sum of the two Axle Widths, Engine Capacity, Fuel Type, Fuel Mode'
-      return k
+      # --- Table with Models for RFECV ---
+      b = [['Extra Tree',6,5,'fuel consumption, vehicle mass, engine power wheelbase, the sum of the two axle widths'],
+         ['Random Forest',7,6,'fuel consumption, vehicle mass, engine power wheelbase, the sum of the two axle widths, engine capacity'],
+         ['Decision Tree',8,7,'fuel consumption, vehicle mass, engine power wheelbase, the sum of the two axle widths, engine capacity, fuel type'],
+         ['XG Boost',9,14,'fuel consumption, vehicle mass, engine power wheelbase, the sum of the two axle widths, engine capacity, fuel type, fuel mode']]
 
-   def show(clf, choice):
-      if choice == 'Number of Features':
-         return num_features(clf)
-      elif choice == 'Features':
-         return features(clf)
-      elif choice == 'Number of Feature _Variables_':
-         return num_feature_variables(clf)
+      # create dataframe
+      b_df = pd.DataFrame(b, columns = ['Classifier', 'Number of Technical Features', 'Number of Feature Variables', 'Technical Features']).set_index('Classifier')
 
-   display = st.radio('RFECV Results:', ('Number of Features', 'Features', 'Number of Feature _Variables_'))
-   if display == 'Number of Features':
-      st.write(show(option, display))
-   if display == 'Features':
-      st.write(show(option, display)) 
-   elif display == 'Number of Feature _Variables_':
-      st.write(show(option, display))
+      # display table
+      st.write("##### Selected Features")
+      st.table(b_df)
 
-   st.divider()
+      st.divider()
 
-   # --- Model Specification---
-   st.subheader("_5. Model Specification_")
+      # --- Model Specification---
+      st.subheader("_5. Model Specification_")
 
-   st.markdown(
-   """
-   - XG Boost Classification Model
-   - Default Parameters
-   - Size of Test Set: 20%
-   - Input Data: Whole dataset with the following 5 feature _variables_:
-      - Fuel Consumption 
-      - Vehicle Mass 
-      - Engine Power 
-      - Wheelbase 
-      - Sum of the two Axle Widths
-   """
-   )
+      st.markdown(
+      """
+      - XG Boost Classification Model
+      - Default Parameters
+      - Size of Test Set: 20%
+      - Cross-validation to avoid under- and over-fitting (Stratified K-Fold, 5 folds)
+      - Input Data: Whole dataset with the following 5 feature _variables_:
+         - Fuel Consumption 
+         - Vehicle Mass 
+         - Engine Power 
+         - Wheelbase 
+         - Sum of the two Axle Widths
+      """
+      )
 
-   st.divider()
+      st.divider()
 
-   # --- Model Performnace Evaluation---
-   st.subheader("_6. Model Performance Evaluation_")
+      # --- Prediction Example---
+      st.subheader("_6. Prediction Example_")
 
-   # load model from file
-   clf_loaded = joblib.load('xg_boost_clf_model')
+      # choose record in test set 
+      record_choice = ['1st', '2nd', '3rd']
+      option = st.selectbox('Choose record in test set:', record_choice)
 
-   # predict
-   y_pred = clf_loaded.predict(X_test_scaled_etc)
+      # load model from file
+      clf_loaded = joblib.load('xg_boost_clf_model')
 
-   # classification report
-   r = pd.DataFrame(classification_report(y_test_etc, y_pred, output_dict=True))
-   r = r.head(3)
+      # select first 3 rows from np array
+      X_test_scaled_etc_3 = X_test_scaled_etc[:3, :]
 
-   # confusion matrix
-   cm = pd.crosstab(y_test_etc, y_pred, rownames = ['Real / Predicted'])
+      # predict
+      y_pred_3 = clf_loaded.predict(X_test_scaled_etc_3)
 
-   display = st.radio('Choose:', ('Classification Report', 'Confusion Matrix'))
-   if display == 'Classification Report':
-      st.dataframe(r)
-   elif display == 'Confusion Matrix':
+      def pred_3(choice):
+         if choice == '1st':
+            p = y_pred_3[0]
+         if choice == '2nd':
+            p = y_pred_3[1]
+         elif choice == '3rd':
+            p = y_pred_3[2]
+         return p
+      
+      def observed_3(choice):
+         if choice == '1st':
+            p = 4
+         if choice == '2nd':
+            p = 0
+         elif choice == '3rd':
+            p = 3
+         return p
+      
+      def show(choice, option):
+         if option == 'Observed Class':
+            return observed_3(choice)
+         elif option == 'Predicted Class':
+            return pred_3(choice)
+         
+
+      display = st.radio('', ('Predicted Class', 'Observed Class'))
+      if display == 'Observed Class':
+         st.write(show(option, display))
+      elif display == 'Predicted Class':
+         st.write(show(option, display))
+
+      st.divider()
+
+      # --- Model Performance Evaluation---
+      st.subheader("_7. Model Performance Evaluation_")
+
+      # classification report
+      st.write("##### Classification Report")
+
+      # --- Table with Metrics ---
+      c = [['Macro Average', 0.9565,0.9564,0.9570,0.9564],
+         ['Weighted Average',0.9565,0.9570,0.9565,0.9565]]
+
+      # create dataframe
+      c_df = pd.DataFrame(c, columns = ['Averages', 'Accuracy', 'Precision', 'Recall', 'F1-Score']).set_index('Averages')
+
+      # display table
+      st.table(c_df)
+
+      # confusion matrix
+      st.write("##### Confusion Matrix")
+
+      # predict
+      y_pred = clf_loaded.predict(X_test_scaled_etc)
+
+      cm = pd.crosstab(y_test_etc, y_pred, rownames = ['Real / Predicted'])
       st.dataframe(cm)
 
-   st.divider()
 
-   # --- Feature Importances --- 
-   st.subheader("_7. Feature Importances_")
-   # data for feature importances
-   data = [['Fuel Consumption', 0.586], 
-           ['Vehicle Mass', 0.204], 
-           ['Engine Power', 0.091],
-           ['Wheelbase', 0.062],
-           ['Sum of Axle Widhts', 0.057]]
+      st.divider()
 
-   # create dataframe
-   fi = pd.DataFrame(data, columns = ['Feature', 'Score'])
+      # --- Feature Importances --- 
+      st.subheader("_8. Feature Importances_")
+      # data for feature importances
+      data = [['Fuel Consumption', 0.586], 
+            ['Vehicle Mass', 0.204], 
+            ['Engine Power', 0.091],
+            ['Wheelbase', 0.062],
+            ['Sum of Axle Widhts', 0.057]]
 
-   # plot feature importances
-   # plot
-   fig = plt.figure()
-   sns.barplot(fi, y = "Feature", x = "Score", color = 'steelblue')
-   # plt.title("Feature Importances")
-   plt.ylabel('')
-   st.pyplot(fig)
+      # create dataframe
+      fi = pd.DataFrame(data, columns = ['Feature', 'Score'])
+
+      # plot feature importances
+      # plot
+      fig = plt.figure()
+      sns.barplot(fi, y = "Feature", x = "Score", color = 'steelblue')
+      # plt.title("Feature Importances")
+      plt.ylabel('')
+      st.pyplot(fig)
+
+      st.divider()
+
+      # --- Selected Classification Models --- 
+      st.subheader("_9. Selected Classification Models_")
+
+      # KNN and RF Models
+      st.write("##### Best KNN and Random Forest Classification Models (Scores in %)")
+
+      # --- Table with Values ---
+      d = [['KNN (manhattan, 2 neighbors)','Italian','Italian','all','94','94','94','94','4 min 40 s'],
+         ['KNN (manhattan, 2 neighbors)','Italian','Whole','all','96','96','96','96','1 h 33 min 41 s'],
+         ['RF (max_features = None, min_samples_split = 6)','Italian','Italian','all','96','96','96', '96','56 min 44 s'],
+         ['RF (max_features = None, min_samples_split = 6)','Italian','Whole','all','97','97','97', '97','1 h 8 min 40 s']]
+
+      # create dataframe
+      d_df = pd.DataFrame(d, columns = ['Model','Parameters Selected with Dataset','Trained on Dataset','Number of Feature Variables','Accuracy','Precision','Recall','F1-Score','CPU-Time']).set_index('Model')
+
+      # display table
+      st.table(d_df)
+
+
+      # Boost Models
+      st.write("##### Best Ada Boost and XG Boost Classification Models (Scores in %)")
+
+      # --- Table with Values ---
+      e = [['XG Boost','Whole','5','96','96','96', '96','1 min 28 s'],
+         ['XG Boost','Whole','all','97','97','97','97','2 min 24 s'],
+         ['Ada Boost','Whole','5','96','96','96', '96','2 min 42 s'],
+         ['Ada Boost','Whole','6','96','96','96', '96','3 min 0 s']]
+
+      # create dataframe
+      e_df = pd.DataFrame(e, columns = ['Model','Trained on Dataset','Number of Feature Variables','Accuracy','Precision','Recall','F1-Score','CPU-Time']).set_index('Model')
+
+      # display table
+      st.table(e_df)
 
 # --- Page 4 (Marius and Leo) ---
 
@@ -599,7 +650,9 @@ if page == pages[3] :
 
       # Load the saved model
       mlp_model = load_model("mlp_model.h5") 
-
+      
+      with open("mlp_model_history.json", "r") as file:
+         history_mlp = json.load(file)
       # Display model summary
       st.subheader("MLP Model Summary")
       st.write(mlp_model.summary())
@@ -641,13 +694,14 @@ if page == pages[3] :
       st.write(f'MLP Recall: {recall_mlp:.2f}')
       st.write(f'MLP F1 Score: {f1_mlp:.2f}')
       st.write(f'MLP ROC AUC: {roc_auc_mlp:.2f}')
-
+      
+      st.write(mlp_model)
       # 6. Visualizations
       st.header("### Model Training History")
       # Plot accuracy history
       plt.figure(figsize=(12, 6))
-      plt.plot(mlp_model.history['accuracy'])
-      plt.plot(mlp_model.history['val_accuracy'])
+      plt.plot(history_mlp['accuracy'])
+      plt.plot(history_mlp['val_accuracy'])
       plt.title('MLP Model accuracy')
       plt.ylabel('Accuracy')
       plt.xlabel('Epoch')
@@ -656,8 +710,8 @@ if page == pages[3] :
 
       # Plot loss history
       plt.figure(figsize=(12, 6))
-      plt.plot(mlp_model.history['loss'])
-      plt.plot(mlp_model.history['val_loss'])
+      plt.plot(history_mlp['loss'])
+      plt.plot(history_mlp['val_loss'])
       plt.title('MLP Model loss')
       plt.ylabel('Loss')
       plt.xlabel('Epoch')
