@@ -86,7 +86,7 @@ if page == pages[1] :
    )
 
    st.divider()
-   st.header("_1. Raw data_")
+   st.subheader("_1. Raw data_")
    st.markdown(
    """
    - 38 variables 
@@ -142,12 +142,12 @@ if page == pages[1] :
    df_raw = pd.DataFrame(data_raw)
 
    # Display the DataFrame in Streamlit
-   st.title("Overview of the Variables in the Raw Dataset")
+   st.write("##### Overview of the Variables in the Raw Dataset")
    st.table(df_raw)
    st.divider()
 
    #######################################################################################
-   st.header("_2. Data Selection_")
+   st.subheader("_2. Data Selection_")
    st.markdown(
    """
    - Deleted variables with over 75% missing values
@@ -187,15 +187,15 @@ if page == pages[1] :
    df_selected = pd.DataFrame(data_selected)
 
    # Display the DataFrame in Streamlit
-   st.title("Overview of the Selected Variables in the Dataset")
+   st.write("##### Overview of the Selected Variables in the Dataset")
    st.table(df_selected)
 
-   st.title("Descriptive Statistics of the Selected Variables in the Dataset")
+   st.write("##### Descriptive Statistics of the Selected Variables in the Dataset")
    st.dataframe(df.describe())
 
    st.divider()
 
-   st.header("_3. Data Pre-Processing_")
+   st.subheader("_3. Data Pre-Processing_")
    st.markdown(
    """
    1. Defined the variable “ID” as index
@@ -246,12 +246,12 @@ if page == pages[1] :
    df_cleaned = pd.DataFrame(data_cleaned)
 
    # Display the DataFrame in Streamlit
-   st.title("Overview and Order of Data Cleaning")
+   st.write("##### Overview and Order of Data Cleaning")
    st.table(df_cleaned)
 
    st.divider()
 
-   st.header("_4. Relationship Between Variables_")
+   st.subheader("_4. Relationship Between Variables_")
    st.markdown(
    """
    We performed different analyses and provide different visualisations to show the relationship between 
@@ -259,7 +259,7 @@ if page == pages[1] :
    """
    )
 
-   st.subheader("_4.1 Correlation heatmap of quantitative features_")
+   st.write("#### 4.1 Correlation heatmap of quantitative features")
    st.markdown(
    """
    Overview of the relationships between the target variable, emissions (Ewltp (g/km)), and 
@@ -271,7 +271,7 @@ if page == pages[1] :
    """
    )
 
-   st.title("_Correlation heatmap of quantitative features_")
+   st.write("##### Correlation heatmap of quantitative features")
    #st.caption("The orange dashed lines denote the 20% percentiles (124, 134, 146, 159).")
 
    # separating qualitative and quantiative variables
@@ -292,9 +292,9 @@ if page == pages[1] :
    st.pyplot(fig)
 
    #######################################################################
-   st.subheader("_4.2 Analysis of CO2 Emissions in Relation to Fuel Consumption and Qualitative Variables_")
+   st.write("#### 4.2 Analysis of CO2 Emissions in Relation to Fuel Consumption and Qualitative Variables")
 
-   st.title("Scatter Plots of CO2 Emissions")
+   st.write("##### Scatter Plots of CO2 Emissions")
 
    # Creating the subplot
    fig, axes = plt.subplots(1, 2, figsize=(12, 6), sharey=True)
@@ -327,7 +327,7 @@ if page == pages[1] :
    )
 
    st.divider()
-   st.header("_5. Final Pre-Processed Dataset for Model Training_")
+   st.subheader("_5. Final Pre-Processed Dataset for Model Training_")
    st.markdown(
    """
    - 13 variables 
@@ -613,12 +613,12 @@ if page == pages[3] :
 # --- Marius ---  
    if selected_option == "MLP Classification Model":
       # 2. Data Loading and Preprocessing
-      st.header("Data Loading and Preprocessing")
+      st.subheader("_1. Data Loading and Preprocessing_")
 
       # Load the dataset
       df = load_df().set_index("ID")
 
-      st.subheader("First few rows of the dataset:")
+      st.write("##### First few rows of the dataset:")
       st.write(df.head(10))
 
       # Calculate percentiles for 'ewltp' column
@@ -629,7 +629,7 @@ if page == pages[3] :
                                  bins=[0, p1, p2, p3, p4, df['ewltp'].max()],
                                  labels=[1, 2, 3, 4, 5])
 
-      st.subheader("Data after processing 'emissions_cat':")
+      st.write("##### Data after processing 'emissions_cat':")
       st.write(df.head(10))
 
       # Feature engineering
@@ -646,15 +646,17 @@ if page == pages[3] :
       X_train, X_test, y_train, y_test = train_test_split(X_scaled, y, test_size=0.2, random_state=42)
             
       # 4. Model Evaluation
-      st.subheader("Model Evaluation")
+      st.subheader("_2. Model Evaluation_")
 
       # Load the saved model
       mlp_model = load_model("mlp_model.h5") 
       
       with open("mlp_model_history.json", "r") as file:
          history_mlp = json.load(file)
+      
       # Display model summary
-      st.subheader("MLP Model Summary")
+      st.write("##### MLP Model Summary")
+      #model_summary = mlp_model.summary()
       st.write(mlp_model.summary())
       
       # Evaluate the model
@@ -666,17 +668,17 @@ if page == pages[3] :
       predicted_classes_mlp = np.argmax(predictions_mlp, axis=1)
 
       # Classification report
-      st.subheader("Classification Report")
+      st.write("#### Classification Report")
       st.text(classification_report(y_test, predicted_classes_mlp))
 
       # Confusion matrix
       conf_matrix_mlp = confusion_matrix(y_test, predicted_classes_mlp)
-      st.subheader("Confusion Matrix")
+      st.write("##### Confusion Matrix")
       st.write(conf_matrix_mlp)
 
       # Plot the confusion matrix
-      st.subheader("Confusion Matrix Heatmap")
-      plt.figure(figsize=(10, 7))
+      st.write("##### Confusion Matrix Heatmap")
+      plt.figure(figsize=(10, 8))
       sns.heatmap(conf_matrix_mlp, annot=True, fmt='d', cmap='Blues', xticklabels=[0, 1, 2, 3, 4], yticklabels=[0, 1, 2, 3, 4])
       plt.xlabel('Predicted')
       plt.ylabel('True')
@@ -684,7 +686,7 @@ if page == pages[3] :
       st.pyplot(plt)
 
       # 5. Additional Metrics
-      st.header("Additional Metrics")
+      st.write("##### Additional Metrics")
       precision_mlp = precision_score(y_test, predicted_classes_mlp, average='weighted')
       recall_mlp = recall_score(y_test, predicted_classes_mlp, average='weighted')
       f1_mlp = f1_score(y_test, predicted_classes_mlp, average='weighted')
@@ -696,7 +698,7 @@ if page == pages[3] :
       st.write(f'MLP ROC AUC: {roc_auc_mlp:.2f}')
       
       # 6. Visualizations
-      st.header("### Model Training History")
+      st.write("##### Model Training History")
       # Plot accuracy history
       plt.figure(figsize=(12, 6))
       plt.plot(history_mlp['accuracy'])
@@ -867,7 +869,7 @@ if page == pages[4] :
    """)
 
    # Discussion of XGBoost Model Improvement
-   st.subheader("Improving the XGBoost Model with Grid Search")
+   st.subheader("_1. Improving the XGBoost Model with Grid Search_")
    st.write("""
    The current XGBoost model uses default parameters, which provide a baseline performance. To achieve better evaluation metrics, we could perform a grid search to fine-tune the hyperparameters. This process would identify the optimal settings for the model, potentially leading to improved accuracy, precision, recall, and F1 scores.
    """)
@@ -883,14 +885,14 @@ if page == pages[4] :
       'colsample_bytree': [0.8, 1.0]
    }
    for key, values in params.items():
-      st.write(f"{key}: {values}")
+      st.write(f"* {key}: {values}")
 
    st.write("""
    This grid search would evaluate different combinations of these hyperparameters to identify the best model configuration. The optimized model is likely to outperform the default XGBoost model, especially if the dataset is complex or imbalanced.
    """)
 
    # Discussion of Granularity in Predictions
-   st.subheader("Adjusting Prediction Granularity")
+   st.subheader("_2. Adjusting Prediction Granularity_")
    st.write("""
    Our current classification model predicts expected CO2 emissions at five levels: very low, low, average, high, and very high. However, the granularity of these predictions can be adjusted based on client needs.
 
