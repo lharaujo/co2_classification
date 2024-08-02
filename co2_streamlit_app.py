@@ -477,6 +477,11 @@ if page == pages[2] :
       # --- Prediction Example---
       st.subheader("_6. Prediction Example_")
 
+      st.write("Test set")
+      indexes = [81631850, 78546879, 77535671]
+      df_slice = data_etc[data_etc.index.isin(indexes)].sort_index(ascending=False)
+      st.table(df_slice)
+      
       # choose record in test set 
       record_choice = ['1st', '2nd', '3rd']
       option = st.selectbox('Choose record in test set:', record_choice)
@@ -486,7 +491,7 @@ if page == pages[2] :
 
       # select first 3 rows from np array
       X_test_scaled_etc_3 = X_test_scaled_etc[:3, :]
-
+      
       # predict
       y_pred_3 = clf_loaded.predict(X_test_scaled_etc_3)
 
