@@ -87,6 +87,8 @@ if page == pages[1] :
 
    st.divider()
    st.subheader("_1. Raw data_")
+   
+   df = df_cleaned_load.copy()
    st.markdown(
    """
    - 38 variables 
