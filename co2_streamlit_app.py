@@ -40,7 +40,7 @@ def load_df():
    df = get_csv("data_cleaned_final_1.csv")
    df = pd.concat([df, get_csv("data_cleaned_final_2.csv")])
    return df
-df = load_df()
+df_cleaned_load = load_df()
 
 # categorical data (Italian dataset)
 df_cat_it = get_csv("categorical_data_it.csv")
@@ -342,6 +342,8 @@ if page == pages[2] :
 
       # --- XG Boost Classification Model ---
 
+      df = df_cleaned_load.copy()
+
       # new compound variable for axle widths
       df_all['at_sum'] = df_all['at1'] + df_all['at2']
       df_all = df_all.drop(columns = ['at1', 'at2'])
@@ -616,7 +618,7 @@ if page == pages[3] :
       st.subheader("_1. Data Loading and Preprocessing_")
 
       # Load the dataset
-      df = load_df().set_index("ID")
+      df = df_cleaned_load.copy().set_index("ID")
 
       st.write("##### First few rows of the dataset:")
       st.write(df.head(10))
@@ -657,11 +659,24 @@ if page == pages[3] :
       # Display model summary
       st.write("##### MLP Model Summary")
       #model_summary = mlp_model.summary()
-      st.write(mlp_model.summary())
+      
+      def get_model_summary(model):
+         # Capture model summary as a string
+         stream = io.StringIO()
+         model.summary(print_fn=lambda x: stream.write(x + '\n'))
+         summary_str = stream.getvalue()
+         stream.close()
+         return summary_str
+      
+      # Get the model summary
+      summary_str = get_model_summary(mlp_model)
+
+      # Display the model summary in Streamlit app
+      st.text(summary_str)
       
       # Evaluate the model
       loss_mlp, accuracy_mlp = mlp_model.evaluate(X_test, y_test)
-      st.write(f'MLP Accuracy on test set: {accuracy_mlp * 100:.2f}%')
+      # st.write(f'MLP Accuracy on test set: {accuracy_mlp * 100:.2f}%')
 
       # Make predictions
       predictions_mlp = mlp_model.predict(X_test)
@@ -744,7 +759,7 @@ if page == pages[3] :
       final_model = load_model("XG_Boost_regression_model.pkl")
 
       # load data
-      df = load_df()
+      df = df_cleaned_load.copy()
       
       # One-hot encoding of the three categorical variables Ft, Fm and only_IT
       df_encoded = pd.get_dummies(df, columns=['ft','fm','only_it'])
