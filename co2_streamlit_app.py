@@ -611,7 +611,7 @@ if page == pages[2] :
 
 if page == pages[3] : 
    st.header("Competitor Models", divider='orange')
-   options = ["Coose a Model", "MLP Classification Model", "XG Boost Regression Model"]
+   options = ["Choose a Model", "MLP Classification Model", "XG Boost Regression Model"]
 
    selected_option = st.selectbox('', options = options)
 # --- Marius ---  
@@ -622,9 +622,6 @@ if page == pages[3] :
       # Load the dataset
       df = df_cleaned_load.copy().set_index("ID")
 
-      st.write("##### First few rows of the dataset:")
-      st.write(df.head(10))
-
       # Calculate percentiles for 'ewltp' column
       p1, p2, p3, p4 = df['ewltp'].quantile(q=[0.2, 0.4, 0.6, 0.8])
 
@@ -632,9 +629,6 @@ if page == pages[3] :
       df['emissions_cat'] = pd.cut(x=df['ewltp'],
                                  bins=[0, p1, p2, p3, p4, df['ewltp'].max()],
                                  labels=[1, 2, 3, 4, 5])
-
-      st.write("##### Data after processing 'emissions_cat':")
-      st.write(df.head(10))
 
       # Feature engineering
       df['at_sum'] = df['at1'] + df['at2']
@@ -709,26 +703,12 @@ if page == pages[3] :
       st.write("##### Confusion Matrix")
       st.write(conf_matrix_mlp)
 
-      # Plot the confusion matrix
-      st.write("##### Confusion Matrix Heatmap")
-      plt.figure(figsize=(10, 8))
-      sns.heatmap(conf_matrix_mlp, annot=True, fmt='d', cmap='Blues', xticklabels=[0, 1, 2, 3, 4], yticklabels=[0, 1, 2, 3, 4])
-      plt.xlabel('Predicted')
-      plt.ylabel('True')
-      plt.title('MLP Confusion Matrix')
-      st.pyplot(plt)
-
       # 5. Additional Metrics
       st.write("##### Additional Metrics")
       precision_mlp = precision_score(y_test, predicted_classes_mlp, average='weighted')
       recall_mlp = recall_score(y_test, predicted_classes_mlp, average='weighted')
       f1_mlp = f1_score(y_test, predicted_classes_mlp, average='weighted')
       roc_auc_mlp = roc_auc_score(y_test, predictions_mlp, multi_class='ovr', average='weighted')
-
-      st.write(f'MLP Precision: {precision_mlp:.2f}')
-      st.write(f'MLP Recall: {recall_mlp:.2f}')
-      st.write(f'MLP F1 Score: {f1_mlp:.2f}')
-      st.write(f'MLP ROC AUC: {roc_auc_mlp:.2f}')
       
       # 6. Visualizations
       st.write("##### Model Training History")
@@ -879,7 +859,7 @@ if page == pages[3] :
       }).sort_values(by='Importance', ascending=False).reset_index(drop=True)
       
       st.subheader('_2. FEATURE IMPORTANCE_')
-      st.markdown("""The feature variables, listed below, were identified through a 
+      st.markdown("""The feature variables, were identified through a 
    RFECV search and further model evaluations.""")
 
       # Plot the feature importances as a bar plot
@@ -921,7 +901,7 @@ if page == pages[4] :
       st.write(f"* {key}: {values}")
 
    st.write("""
-   This grid search would evaluate different combinations of these hyperparameters to identify the best model configuration. The optimized model is likely to outperform the default XGBoost model, especially if the dataset is complex or imbalanced.
+   This grid search would evaluate different combinations of these hyperparameters to identify the best model configuration. The optimized model is likely to outperform the default XGBoost model.
    """)
 
    # Discussion of Granularity in Predictions
