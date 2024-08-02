@@ -662,19 +662,35 @@ if page == pages[3] :
       st.write("##### MLP Model Summary")
       #model_summary = mlp_model.summary()
       
-      def get_model_summary(model):
-         # Capture model summary as a string
-         stream = io.StringIO()
-         model.summary(print_fn=lambda x: stream.write(x + '\n'))
-         summary_str = stream.getvalue()
-         stream.close()
-         return summary_str
-      
-      # Get the model summary
-      summary_str = get_model_summary(mlp_model)
+      ### Overview:
+      st.markdown("""
+               ##### Overview:
+               - Multilayer Perceptron (MLP) is a type of feedforward artificial neural network (ANN). It consists of at least three layers: an input layer, one or more hidden layers, and an output layer.
+               - MLPs are capable of learning complex patterns in data by adjusting the weights of the connections between neurons through a process called backpropagation, which minimizes the error between the predicted output and the actual output.
 
-      # Display the model summary in Streamlit app
-      st.text(summary_str)
+               ##### Model Architecture:
+               - **Input Layer**: Dense(128, ReLU activation)
+               - **Dropout Layer**: 30% dropout rate
+               - **Hidden Layer**: Dense(64, ReLU activation)
+               - **Dropout Layer**: 30% dropout rate
+               - **Hidden Layer**: Dense(32, ReLU activation)
+               - **Output Layer**: Dense(5, Softmax activation)
+
+               ##### Model Compilation:
+               - **Optimizer**: Adam
+               - **Loss Function**: Sparse Categorical Cross-Entropy
+               - **Metrics**: Accuracy
+
+               ##### Early Stopping:
+               - **Monitor**: Validation Loss
+               - **Patience**: 10 epochs
+               - **Restore Best Weights**: True
+
+               ##### Training Configuration:
+               - **Validation Split**: 20%
+               - **Epochs**: 100
+               - **Batch Size**: 32
+               """)
       
       # Evaluate the model
       loss_mlp, accuracy_mlp = mlp_model.evaluate(X_test, y_test)
