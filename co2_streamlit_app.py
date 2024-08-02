@@ -695,7 +695,6 @@ if page == pages[3] :
       st.write(f'MLP F1 Score: {f1_mlp:.2f}')
       st.write(f'MLP ROC AUC: {roc_auc_mlp:.2f}')
       
-      st.write(mlp_model)
       # 6. Visualizations
       st.header("### Model Training History")
       # Plot accuracy history
